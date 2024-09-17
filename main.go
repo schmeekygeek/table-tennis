@@ -6,14 +6,12 @@ package main
 import (
 	"context"
 	"errors"
-	"fmt"
 	"net"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
-	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/log"
 	"github.com/charmbracelet/ssh"
@@ -68,7 +66,5 @@ func main() {
 // Just a generic tea.Model to demo terminal information of ssh.
 
 func (m model) Init() tea.Cmd {
-  m.view += m.txtStyle.Render(fmt.Sprintf("Please type in a username \n\n%s", m.textInput.View()))
-  m.view += "\n\n" + m.quitStyle.Render("Press 'esc' to quit\n")
-  return textinput.Blink
+  return m.spinner.Tick
 }

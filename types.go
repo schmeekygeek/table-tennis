@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/charmbracelet/bubbles/spinner"
 	"github.com/charmbracelet/bubbles/textinput"
 	"github.com/charmbracelet/lipgloss"
 )
@@ -24,8 +25,5 @@ type model struct {
   errorStyle lipgloss.Style
   quitStyle  lipgloss.Style
   view       string
-}
-
-type Game struct {
-
+  spinner    spinner.Model
 }

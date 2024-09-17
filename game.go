@@ -1,9 +1,11 @@
 package main
 
 import (
+	"fmt"
 	"regexp"
 	"strings"
 
+	"github.com/charmbracelet/bubbles/spinner"
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -19,11 +21,17 @@ func teaHandler(s ssh.Session) (tea.Model, []tea.ProgramOption) {
   txtStyle := renderer.NewStyle().Foreground(lipgloss.Color("10"))
   quitStyle := renderer.NewStyle().Foreground(lipgloss.Color("8"))
 
+  // textinput
   ti := textinput.New()
   ti.Placeholder = "Pikachu"
   ti.Focus()
   ti.CharLimit = 156
   ti.Width = 20
+
+  // spinner
+  sp := spinner.New()
+	sp.Spinner = spinner.Dot
+	sp.Style = errorStyle
 
   m := model{
   	stage:      UsernameStage,
@@ -35,6 +43,7 @@ func teaHandler(s ssh.Session) (tea.Model, []tea.ProgramOption) {
   	txtStyle:   txtStyle,
   	errorStyle: errorStyle,
   	quitStyle:  quitStyle,
+    spinner:    sp,
   	view:       "",
   }
 
@@ -54,6 +63,8 @@ func (m model) View() string {
     }
     sb.WriteString("\n")
     sb.WriteString(m.quitStyle.Render("Press `esc` to quit."))
+  } else if m.stage == LoadingStage {
+      sb.WriteString(fmt.Sprintf("\n %s You're being matched with another player, hang tight!", m.spinner.View()))
   }
   return sb.String()
 }
@@ -71,19 +82,21 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
     case tea.KeyEnter:
       if !regexp.MustCompile(`\s`).Match([]byte(m.textInput.Value())) {
         // proceed to loading screen
+        m.stage = LoadingStage
       }
     case tea.KeyCtrlC, tea.KeyEsc:
       return m, tea.Quit
   }
+
   case tea.WindowSizeMsg:
     m.height = msg.Height
     m.width = msg.Width
+
   case errMsg:
     m.err = msg
     return m, nil
   }
-
   m.textInput, cmd = m.textInput.Update(msg)
-
+  m.spinner, cmd = m.spinner.Update(msg)
   return m, cmd
 }
