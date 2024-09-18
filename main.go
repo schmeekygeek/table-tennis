@@ -1,8 +1,5 @@
 package main
 
-// An example Bubble Tea server. This will put an ssh session into alt screen
-// and continually print up to date terminal information.
-
 import (
 	"context"
 	"errors"
@@ -27,12 +24,13 @@ const (
 )
 
 func main() {
+  InitGameServer()
   s, err := wish.NewServer(
     wish.WithAddress(net.JoinHostPort(host, port)),
     wish.WithHostKeyPath(".ssh/id_ed25519"),
     wish.WithMiddleware(
       bubbletea.Middleware(teaHandler),
-      activeterm.Middleware(), // Bubble Tea apps usually require a PTY.
+      activeterm.Middleware(),
       logging.Middleware(),
     ),
   )
@@ -58,12 +56,6 @@ func main() {
     log.Error("Could not stop server", "error", err)
   }
 }
-
-// You can wire any Bubble Tea model up to the middleware with a function that
-// handles the incoming ssh.Session. Here we just grab the terminal info and
-// pass it to the new model. You can also return tea.ProgramOptions (such as
-// tea.WithAltScreen) on a session by session basis.
-// Just a generic tea.Model to demo terminal information of ssh.
 
 func (m model) Init() tea.Cmd {
   return m.spinner.Tick
