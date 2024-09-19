@@ -1,21 +1,21 @@
 package main
 
 import (
-	"context"
-	"errors"
-	"net"
-	"os"
-	"os/signal"
-	"syscall"
-	"time"
+  "context"
+  "errors"
+  "net"
+  "os"
+  "os/signal"
+  "syscall"
+  "time"
 
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/log"
-	"github.com/charmbracelet/ssh"
-	"github.com/charmbracelet/wish"
-	"github.com/charmbracelet/wish/activeterm"
-	"github.com/charmbracelet/wish/bubbletea"
-	"github.com/charmbracelet/wish/logging"
+  tea "github.com/charmbracelet/bubbletea"
+  "github.com/charmbracelet/log"
+  "github.com/charmbracelet/ssh"
+  "github.com/charmbracelet/wish"
+  "github.com/charmbracelet/wish/activeterm"
+  "github.com/charmbracelet/wish/bubbletea"
+  "github.com/charmbracelet/wish/logging"
 )
 
 const (
@@ -46,7 +46,7 @@ func main() {
       log.Error("Could not start server", "error", err)
       done <- nil
     }
-    }()
+  }()
 
   <-done
   log.Info("Stopping SSH server")

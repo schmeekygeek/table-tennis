@@ -2,7 +2,9 @@ package main
 
 import (
 	"fmt"
+	"math/rand"
 	"strings"
+	"time"
 
 	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
@@ -11,17 +13,32 @@ import (
 	"github.com/charmbracelet/wish/bubbletea"
 )
 
+var letters = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890")
+
 func InitGameServer() {
-  gameServer = new(GameServer)
+  gameServer = &GameServer{
+  	rooms: map[string]Room{},
+  }
+  currentRoomStat = Empty
+  currentSeq = randSeq(5)
+}
+
+func randSeq(n int) string {
+  r := rand.New(rand.NewSource(time.Now().UnixNano()))
+  b := make([]rune, n)
+  for i := range b {
+    b[i] = letters[r.Intn(len(letters))]
+  }
+  return string(b)
 }
 
 func teaHandler(s ssh.Session) (tea.Model, []tea.ProgramOption) {
   pty, _, _ := s.Pty()
-  fmt.Println(s.User())
+
   renderer := bubbletea.MakeRenderer(s)
+  quitStyle := renderer.NewStyle().Foreground(lipgloss.Color("8"))
   errorStyle := renderer.NewStyle().Foreground(lipgloss.Color("9"))
   txtStyle := renderer.NewStyle().Foreground(lipgloss.Color("10"))
-  quitStyle := renderer.NewStyle().Foreground(lipgloss.Color("8"))
 
   // spinner
   sp := spinner.New()
@@ -29,7 +46,7 @@ func teaHandler(s ssh.Session) (tea.Model, []tea.ProgramOption) {
 	sp.Style = errorStyle
 
   m := model{
-  	username:   "",
+  	stage:      LoadingStage,
   	width:      pty.Window.Width,
   	height:     pty.Window.Height,
   	err:        nil,
@@ -40,13 +57,33 @@ func teaHandler(s ssh.Session) (tea.Model, []tea.ProgramOption) {
   	spinner:    sp,
   }
 
+  switch currentRoomStat {
+  case Empty:
+    room := Room{
+    	player1: &model{},
+    	player2: &model{},
+    	ballPos: Point{},
+    }
+    room.player1 = &m
+    currentRoomStat = Half
+    gameServer.rooms[currentSeq] = room
+  case Half:
+    if room, ok := gameServer.rooms[currentSeq]; ok {
+      room.player2 = &m
+      currentRoomStat = Empty
+      gameServer.rooms[currentSeq] = room
+      currentSeq = randSeq(5)
+      // next step: move to game stage
+    }
+  }
+
   return m, []tea.ProgramOption{tea.WithAltScreen()}
 }
 
 func (m model) View() string {
   var sb strings.Builder
   if m.stage == LoadingStage {
-      sb.WriteString(fmt.Sprintf("\n %s You're being matched with another player, hang tight!", m.spinner.View()))
+    sb.WriteString(fmt.Sprintf("\n %s You're being matched with another player, hang tight!", m.spinner.View()))
   }
   return sb.String()
 }
@@ -62,7 +99,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
   case tea.KeyMsg:
     switch msg.Type {
     case tea.KeyEnter:
-        // proceed to loading screen
+      fmt.Println(gameServer.rooms)
+      fmt.Println(currentRoomStat)
     case tea.KeyCtrlC, tea.KeyEsc:
       return m, tea.Quit
   }

@@ -3,21 +3,28 @@ package main
 import (
 	"github.com/charmbracelet/bubbles/spinner"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/charmbracelet/ssh"
 )
 
 type Stage int
+type RoomStatus int
 
-var gameServer *GameServer
+var (
+  gameServer *GameServer
+  currentSeq string // current room seq
+  currentRoomStat RoomStatus
+)
 
 const (
+  canvasY = 20
+  canvasX = 60
   LoadingStage Stage = iota
   GameStage
+  Empty RoomStatus = iota
+  Half
 )
 
 type model struct {
   stage      Stage
-  username   string
   width      int
   height     int
   err        error
@@ -26,12 +33,7 @@ type model struct {
   quitStyle  lipgloss.Style
   view       string
   spinner    spinner.Model
-}
-
-type Client struct {
-  session   *ssh.Session // The session of the client
-  pos       Point // The position of the player
-  room      string // The room to which the client belongs (initially empty)
+  room       string // The room to which the client belongs (initially empty)
 }
 
 type Point struct {
@@ -39,12 +41,11 @@ type Point struct {
 }
 
 type Room struct {
-  player1    Client // player 1
-  player2    Client // player 2
+  player1    *model // player 1
+  player2    *model // player 2
   ballPos    Point // position of the ball
 }
 
 type GameServer struct {
-  clients    []*ssh.Session  // list of all connected (but not matched) clients
   rooms      map[string]Room // map roomId to room
 }
